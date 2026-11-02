@@ -21,20 +21,27 @@ This plugin adds Glitchless to [DeepSeek Harness](https://github.com/deepseek-ai
 
 ## Install
 
+Before you add it:
+
+- Node.js 22 or newer has to be on the `PATH` that DSH runs with. DSH starts the Glitchless server with `npx`, and
+  without Node the 30 tools never appear and nothing says why, so it looks like a broken plugin. `node --version` in
+  the shell you start DSH from should print v22 or later.
+- Glitchless Cloud is a third-party service, not part of DSH or DeepSeek. It has a
+  [free plan](https://www.glitchless.gg), and you sign in by approving a code in your browser (see Sign in). You can
+  also run your own server instead (see Self-hosted).
+
 ```bash
 dsh plugin --profile web add glitchless-dsh
 ```
 
-Restart DSH. Use `--profile tui` or `--profile headless` for those profiles. DSH runs the server with `npx`, so Node.js
-22 or newer has to be on your `PATH`.
+Restart DSH. Use `--profile tui` or `--profile headless` for those profiles.
 
 ## Sign in
 
 Ask DSH to "sign in to Glitchless". It calls `glitchless_sign_in`, which shows a link and a code; approve the code in
 the Glitchless dashboard and the agent reaches every game in your workspace. No key goes in a config file: the server
 keeps a workspace key in `~/.config/glitchless/credentials.json`, readable only by you, and `npx -y glitchless-mcp
-logout` deletes it. You need a Glitchless account, which is [free to start](https://www.glitchless.gg). A new
-workspace has a demo game, so you can try it before your game sends anything.
+logout` deletes it. A new workspace has a demo game, so you can try it before your game sends anything.
 
 ## Use it
 
