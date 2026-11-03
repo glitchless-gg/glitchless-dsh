@@ -7,10 +7,10 @@ the stutter on level 2.
 
 This plugin adds Glitchless to [DeepSeek Harness](https://github.com/deepseek-ai/deepseek-harness) (DSH):
 
-- **30 tools** from the `glitchless-mcp` server, shown to the model as `mcp__glitchless__*`: ranked findings, frame
+- **25 tools** from the `glitchless-mcp` server, shown to the model as `mcp__glitchless__*`: ranked findings, frame
   times by level and device, errors, one session's timeline, your game's own events and funnels, bug reports players
   sent, store reviews and revenue, each game's dashboard, playtest bots, share links, and its alerts (which rules are
-  on, the weekly summary, and findings you accept as known).
+  on, the weekly summary, findings you accept as known, and errors you resolve).
 - **3 skills**, also as slash commands:
 
 | Skill | What it does |
@@ -24,7 +24,7 @@ This plugin adds Glitchless to [DeepSeek Harness](https://github.com/deepseek-ai
 Before you add it:
 
 - Node.js 22 or newer has to be on the `PATH` that DSH runs with. DSH starts the Glitchless server with `npx`, and
-  without Node the 30 tools never appear and nothing says why, so it looks like a broken plugin. `node --version` in
+  without Node the 25 tools never appear and nothing says why, so it looks like a broken plugin. `node --version` in
   the shell you start DSH from should print v22 or later.
 - Glitchless Cloud is a third-party service, not part of DSH or DeepSeek. It has a
   [free plan](https://www.glitchless.gg), and you sign in by approving a code in your browser (see Sign in). You can
