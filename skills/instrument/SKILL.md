@@ -1,6 +1,6 @@
 ---
 name: instrument
-description: Add Glitchless observability to a game (Three.js or React Three Fiber, Phaser 3 or 4, Babylon.js, PlayCanvas, Unity 6.3+, Godot 4.5+, Unreal Engine 5.8 or GameMaker 2024.2+). Frame-time percentiles, hitch attribution, errors, gameplay events, level heatmaps, and tools that let coding agents measure the running game. Use when the user wants telemetry, analytics, performance monitoring or "observability" in a game, or asks to add Glitchless.
+description: Add Glitchless observability to a game (Unity 6.3+, Godot 4.5+, Unreal Engine 5.8, Three.js or React Three Fiber, Roblox, Phaser 3 or 4, Babylon.js, PlayCanvas or GameMaker 2024.2+). Frame-time percentiles, hitch attribution, errors, gameplay events, level heatmaps, and tools that let coding agents measure the running game. Use when the user wants telemetry, analytics, performance monitoring or "observability" in a game, or asks to add Glitchless.
 ---
 
 # Instrument a game with Glitchless
@@ -13,13 +13,14 @@ have a way to measure the running game before and after a change.
 
 | You find | Engine | Follow |
 | --- | --- | --- |
-| `three` or `@react-three/fiber` in package.json | Three.js | [references/threejs.md](references/threejs.md) |
-| `phaser` in package.json, or a `<script>` that loads Phaser | Phaser 3.60+ or 4 | [references/phaser.md](references/phaser.md) |
-| `@babylonjs/core` or `babylonjs` in package.json, or a `<script>` that loads Babylon.js | Babylon.js 5+ | [references/babylon.md](references/babylon.md) |
-| `playcanvas` in package.json, a PlayCanvas Editor project (scripts using `pc.createScript` or `pc.Script`), or a `<script>` that loads PlayCanvas | PlayCanvas 2.x | [references/playcanvas.md](references/playcanvas.md) |
 | `ProjectSettings/ProjectVersion.txt` and `Packages/manifest.json` | Unity 6.3+ | [references/unity.md](references/unity.md) |
 | `project.godot` | Godot 4.5+ | the Godot addon's README: `godot/addons/glitchless/README.md` in the Glitchless repo (`~/.glitchless/godot/addons/glitchless/README.md` if it's cloned there), then [references/godot.md](references/godot.md) for bug reports, streams, properties and multiplayer |
 | a `*.uproject` file | Unreal Engine 5.8 (5.7 untested) | [references/unreal.md](references/unreal.md) |
+| `three` or `@react-three/fiber` in package.json | Three.js | [references/threejs.md](references/threejs.md) |
+| a Rojo `default.project.json` (or `*.project.json`), `wally.toml`, `*.rbxl` / `*.rbxlx`, or `.luau` scripts that call `game:GetService` | Roblox | [references/roblox.md](references/roblox.md) |
+| `phaser` in package.json, or a `<script>` that loads Phaser | Phaser 3.60+ or 4 | [references/phaser.md](references/phaser.md) |
+| `@babylonjs/core` or `babylonjs` in package.json, or a `<script>` that loads Babylon.js | Babylon.js 5+ | [references/babylon.md](references/babylon.md) |
+| `playcanvas` in package.json, a PlayCanvas Editor project (scripts using `pc.createScript` or `pc.Script`), or a `<script>` that loads PlayCanvas | PlayCanvas 2.x | [references/playcanvas.md](references/playcanvas.md) |
 | a `*.yyp` file | GameMaker 2024.2+ | [references/gamemaker.md](references/gamemaker.md) |
 
 Read only the file for this game's engine: each one walks through reading the game, installing,
@@ -40,12 +41,17 @@ Settings, for every engine:
   PRIVACY.md lists every field and has the wording). If they want to know whether players come back (retention:
   D1, D7, D30), offer install mode: it adds only a random player ID kept on the device (`privacy: 'install'`;
   Godot `"privacy": "install"`; Unity `Privacy = Privacy.Install`; Unreal `Privacy=Install`). Anonymous mode
-  can't count returning players. Full mode adds a stored player ID, device detail and positions.
+  can't count returning players. Full mode adds a stored player ID, device detail and positions. The Roblox SDK is
+  anonymous only: on Roblox a stored ID would be kept against the player's account, which Roblox's rules protect. For
+  a Roblox game's retention, connect Roblox on Glitchless Cloud instead (Settings → Integrations → Roblox, with an Open
+  Cloud API key that has only `universe.analytics:read` for the experience): Roblox's own D1, D7 and D30, daily active
+  and new users, Robux and its crash rate by place version then sit next to what the SDK measures.
 - **A "share performance data" setting.** If the game has a settings or options menu, offer to add a toggle wired to
   Glitchless's off switch, so players can turn it off and back on at any time (store rules such as the Unity Asset
   Store's ask for it, and it lets the store forms answer "optional"): `glitchless.setEnabled(on)`; Godot
   `Glitchless.set_enabled(on)`; Unity `Glitchless.SetEnabled(on)`; Unreal `FGlitchless::SetEnabled(bOn)` or the
-  Blueprint node Set Enabled; GameMaker `glitchless_set_enabled(on)`. Off stops measuring and sending at once and drops
+  Blueprint node Set Enabled; GameMaker `glitchless_set_enabled(on)`; Roblox `Glitchless.setEnabled(on)` from the
+  LocalScript that runs the menu (or `Glitchless.setEnabled(player, on)` on the server). Off stops measuring and sending at once and drops
   what was waiting; on starts a new session. Glitchless saves the choice on the device itself, so it holds from the
   first frame of the next launch: show the toggle from the game's own saved setting and call the switch when it
   changes (calling it with the saved value at start changes nothing when they agree). If the user wants players to
@@ -59,7 +65,10 @@ Settings, for every engine:
   Android the Godot SDK marks debug builds and sideloaded ones (adb, an APK file) `tester` the same way; a game sold
   as an APK outside the stores (itch.io) passes `session_type: "user"`. Google Play's testing tracks can't be told
   apart on the device: if the developer ships test builds there, give the testing-track build its own env (`beta`)
-  from a build flag.
+  from a build flag. The developer's own play (checking the setup, a playtest) counts as a player's: on Glitchless
+  Cloud, once it arrives, offer to mark their player as the team's with `glitchless_mark_known`'s `player` (`glitchless_session`
+  without a session id lists the latest sessions with their `player_id`). It then reads as `tester` everywhere, past
+  sessions too.
 - **Version.** Find where the game's version lives and pass it; bump it on every release so Glitchless can compare versions.
 
 ## Every engine: the game's own metrics, and its board
@@ -75,6 +84,8 @@ purchases, a platformer about where players die. Glitchless doesn't assume a gen
    - Unreal: `FGlitchless::Track(TEXT("play"), TEXT("endless"));` (the attribute `what`) or a `TMap` of attributes
      and one of numbers; in Blueprint, Track Event (What) or Track Event
    - GameMaker: `glitchless_track("play", "endless");` (the attribute `what`) or a struct
+   - Roblox: `Glitchless.track(player, "play", { mode = "endless" })` in a server script, or
+     `Glitchless.track("play", { mode = "endless" })` in a LocalScript
 
    Good candidates: the game opening (with the edition, free or full), a mode or run starting, a run ending and
    how, shop and paywall views and where they were opened, purchases started and finished, hints, choices that
@@ -117,8 +128,9 @@ purchases, a platformer about where players die. Glitchless doesn't assume a gen
    - **Groups and zones.** `setGroup('match', id)` with the match ID the game's server made, the same on every
      player and on the server (the SDKs hash it the same way before sending it, by default); `setGroup('match', null)`
      ends it. `setGroup('party', id)` for a party (never a guild or friends list), `setGroup('run')` for a roguelite
-     run (the SDK makes its ID). `setZone(name)` for where the player is in an open world (an MMO zone, a room): not a
-     level, it never ends in a win or a fail.
+     run (the SDK makes its ID). `setZone(name)` for where the player is in an open world or a hub (an MMO zone, a room, a
+     lobby hall): not a level, it never ends in a win or a fail. Time in each zone and frame time per zone come from the
+     frames drawn there, so don't send zone entries or zone timing as events.
 
    Purchases have one convention in every engine, so boards can add them up into revenue: a `purchase` event
    when the store confirms it, with `amount` (a number in the currency's units: 4.99, not 499), `currency` (the
@@ -133,18 +145,21 @@ purchases, a platformer about where players die. Glitchless doesn't assume a gen
    - Unity: `Glitchless.Track("purchase", new Dictionary<string, object> { ["amount"] = 4.99, ["currency"] = "USD", ["item"] = "gems_500" });`
    - Unreal: `FGlitchless::Track(TEXT("purchase"), {{TEXT("currency"), TEXT("USD")}, {TEXT("item"), TEXT("gems_500")}}, {{TEXT("amount"), 4.99}});`
      (in Blueprint, Track Event with `amount` in Numbers)
+   - Roblox: the price in Robux, `Glitchless.track(player, "purchase", { item = "gems_500", amount = 99, currency = "ROBUX" })`
+     in `ProcessReceipt` (boards show Robux with ⬡, never added to dollars; give the dashboard `currency: "ROBUX"`)
 2. A multiplayer game also reports its network, and its dedicated servers (follow the engine reference's
    multiplayer section):
    - **Ping, loss and disconnects.** The Unity SDK reads Netcode for GameObjects and Mirror by itself, Godot its
      MultiplayerAPI with ENet or WebSocket, Unreal its own net driver; a web game passes its ping with
      `netSample({ rtt_ms })` about once a second (or `instrumentNet` for WebRTC), GameMaker with
-     `glitchless_net_sample`, and any engine on another library (Steam Networking Sockets, Photon, Nakama, a game's
+     `glitchless_net_sample`, the Roblox SDK reads each player's ping by itself, and any engine on another library (Steam Networking Sockets, Photon, Nakama, a game's
      own) the same way. Call `disconnect({ reason })` when the connection drops and `reconnect()` when it comes back,
      where the netcode doesn't say: a disconnect ends a level attempt as an abandon, never a fail. Nothing about the
      other end is sent (no addresses).
    - **Server mode.** A dedicated or authoritative server runs the SDK as a server: `glitchless/server` on a Node
      server (with `instrumentWs`, `instrumentSocketIO` or `glitchlessRoom` for Colyseus), the Unity and Godot SDKs in a
-     dedicated-server build (or `--glitchless-server`), the Unreal plugin on a dedicated server. It sends its tick time
+     dedicated-server build (or `--glitchless-server`), the Unreal plugin on a dedicated server; on Roblox the server
+     is always measured, since it is the one that sends. It sends its tick time
      against its tick rate, players connected, CPU, memory and crashes, never anything about players, and Glitchless
      keeps it apart from players under `<game>.server`. It uses the game's own service and client token, and sets
      the same match groups as its players. It needs a Glitchless server that lists `server_mode` in `GET /v1/health`
@@ -152,6 +167,23 @@ purchases, a platformer about where players die. Glitchless doesn't assume a gen
 3. Once events arrive, design the game's own dashboard: follow the `dashboard` skill (next to this one), which
    turns the developer's questions into collectors, panels and pages and saves them with the
    `glitchless_set_dashboard` MCP tool.
+
+## In a jam room
+
+When the user is at a Glitchless jam and gives you a room code (5 letters and digits, such as `K7Q2M`), the game also
+goes to the room's arcade, where everyone plays everyone's game on their phones:
+
+- Add the `glitchless-jam` MCP server (`npx -y glitchless-jam`, the same `GLITCHLESS_URL`; it uses the same sign-in as
+  `glitchless-mcp`). It is the jam's own tool, kept apart from the production one.
+- Build with relative paths, since the room serves the game from a folder of its own: `vite build --base ./` (or
+  `base: './'` in `vite.config.js`), and no `fetch('/…')` of the game's own files. Keep `localStorage` keys prefixed
+  with the game's name: every game in a room shares one origin.
+- Keep the default anonymous mode; the room counts plays.
+- Publish the build folder with `glitchless_jam` (`action: "publish"`, `dir: "dist"`, `room`), or
+  `npx -y glitchless-jam publish dist --room <code>` in a terminal. It joins the room, checks the folder, reads the
+  version from `Glitchless.init`, and answers with the game's link and a QR code: show both to the user.
+- Before publishing a fix, bump the version passed to `Glitchless.init`: a room takes each version once, and its
+  "biggest improvement" award compares the first version with the last.
 
 ## Report
 
